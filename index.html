@@ -296,7 +296,7 @@
       document.getElementById("p-total").textContent = money(p + t);
 
       var contact = [phone, email].filter(Boolean).join(" or ");
-      var note = "No tax charged. Please pay the total above through the office process already in place." +
+      var note = "Please pay the total above through the office process already in place." +
         (contact ? " Contact " + name + " at " + contact + " with any questions about this invoice." : "");
       document.getElementById("p-note").textContent = note;
       var pdfLines = [];
