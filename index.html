@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alive at the Museum invoice</title>
+  <style>
+    :root {
+      --ink: #1a1a1a;
+      --muted: #5c6570;
+      --line: #d7dbe0;
+      --bar: #1e3a5f;
+      --bg: #eef1f4;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+    .wrap { max-width: 560px; margin: 0 auto; padding: 16px 16px 40px; }
+    h1 { font-size: 26px; line-height: 1.2; margin: 8px 0 8px; color: var(--bar); }
+    .lead { margin: 0 0 16px; color: #243140; }
+    form, .preview-tools {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(20, 32, 48, .08);
+    }
+    label { display: block; font-weight: 700; margin: 12px 0 6px; }
+    .hint { font-weight: 400; color: var(--muted); font-size: 13px; }
+    input {
+      width: 100%;
+      font: inherit;
+      padding: 12px;
+      border: 1px solid #c5ced6;
+      border-radius: 8px;
+      background: #fff;
+    }
+    input:focus { outline: 2px solid #8eafd6; border-color: var(--bar); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .total-box {
+      margin-top: 16px;
+      background: #f4f7fb;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-weight: 700;
+    }
+    .total-box strong { color: var(--bar); font-size: 28px; }
+    button {
+      width: 100%;
+      margin-top: 14px;
+      font: inherit;
+      font-weight: 700;
+      color: white;
+      background: var(--bar);
+      border: 0;
+      border-radius: 8px;
+      padding: 14px;
+      cursor: pointer;
+    }
+    button.secondary { background: #3d4a59; }
+    .error { color: #8d1d1d; font-weight: 700; min-height: 1.2em; margin: 8px 0 0; }
+    .sheet {
+      display: none;
+      width: 820px;
+      margin: 24px auto;
+      background: white;
+      color: var(--ink);
+      padding: 48px 52px;
+    }
+    .sheet header {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      border-bottom: 4px solid var(--bar);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .sheet h2 {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: 3px;
+      color: var(--bar);
+    }
+    .who { text-align: right; }
+    .who .name { font-size: 18px; font-weight: 700; }
+    .meta { display: grid; grid-template-columns: 1fr 240px; gap: 24px; margin-bottom: 24px; }
+    .k {
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: white;
+      background: var(--bar);
+      padding: 8px 10px;
+    }
+    td { padding: 12px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .num { text-align: right; white-space: nowrap; }
+    .totals { width: 260px; margin-left: auto; margin-top: 8px; }
+    .totals div { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); }
+    .due { border-bottom: 0 !important; margin-top: 4px; padding-top: 10px !important; font-size: 18px; font-weight: 700; color: var(--bar); }
+    .note { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    .facts td { border: 0; padding: 4px 0; }
+    .facts td:first-child { color: var(--muted); width: 110px; }
+    @media print {
+      body { background: white; }
+      .wrap { display: none !important; }
+      .sheet { display: block !important; margin: 0; padding: 0; width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Make your invoice</h1>
+    <p class="lead">A screenshot of Clay’s text is not an invoice. Type your name and the Pay and Tips from his message. Then save the PDF and attach that file on the pay form.</p>
+    <form id="form">
+      <label for="name">Your full name</label>
+      <input id="name" autocomplete="name" placeholder="First and last name" />
+
+      <div class="row">
+        <div>
+          <label for="phone">Phone <span class="hint">optional</span></label>
+          <input id="phone" inputmode="tel" autocomplete="tel" placeholder="204-555-0100" />
+        </div>
+        <div>
+          <label for="email">Email <span class="hint">optional</span></label>
+          <input id="email" inputmode="email" autocomplete="email" placeholder="you@email.com" />
+        </div>
+      </div>
+
+      <label for="job">What you did</label>
+      <input id="job" placeholder="Barback, door, bottle service, floor" />
+
+      <div class="row">
+        <div>
+          <label for="event">Event</label>
+          <input id="event" value="Alive at the Museum" />
+        </div>
+        <div>
+          <label for="worked">Date you worked</label>
+          <input id="worked" type="date" value="2026-09-15" />
+        </div>
+      </div>
+
+      <label for="billto">Who the invoice is to <span class="hint">change this only if you were given a company name</span></label>
+      <input id="billto" value="Alive at the Museum" />
+
+      <div class="row">
+        <div>
+          <label for="pay">Pay <span class="hint">the Pay number</span></label>
+          <input id="pay" inputmode="decimal" placeholder="0.00" />
+        </div>
+        <div>
+          <label for="tips">Tips <span class="hint">the Tips number</span></label>
+          <input id="tips" inputmode="decimal" placeholder="0.00" />
+        </div>
+      </div>
+
+      <div class="total-box"><span>Your total</span><strong id="live">$0.00</strong></div>
+      <p class="error" id="error"></p>
+      <button type="button" id="create">Create my invoice</button>
+    </form>
+
+    <div class="preview-tools" id="tools" hidden>
+      <p class="lead" style="margin-top:0">Check the total. It should match the Total in Clay’s message. Then save the PDF. On an iPhone, tap the share icon in the print screen and choose Save to Files.</p>
+      <button type="button" id="save">Save as PDF</button>
+      <button type="button" class="secondary" id="back">Edit my details</button>
+    </div>
+  </div>
+
+  <article class="sheet" id="sheet">
+    <header>
+      <h2>INVOICE</h2>
+      <div class="who">
+        <div class="name" id="p-name"></div>
+        <div id="p-city">Winnipeg, MB</div>
+        <div id="p-phone"></div>
+        <div id="p-email"></div>
+      </div>
+    </header>
+    <section class="meta">
+      <div>
+        <div class="k">Bill to</div>
+        <div id="p-bill"></div>
+      </div>
+      <table class="facts">
+        <tr><td>Invoice #</td><td id="p-num"></td></tr>
+        <tr><td>Invoice date</td><td id="p-date"></td></tr>
+        <tr><td>Payment due</td><td>On receipt</td></tr>
+      </table>
+    </section>
+    <table>
+      <thead>
+        <tr><th>Description</th><th class="num">Amount</th></tr>
+      </thead>
+      <tbody id="p-lines"></tbody>
+    </table>
+    <div class="totals">
+      <div><span>Subtotal</span><span id="p-sub"></span></div>
+      <div><span>Tax</span><span>$0.00</span></div>
+      <div class="due"><span>Total due</span><span id="p-total"></span></div>
+    </div>
+    <div class="note" id="p-note"></div>
+  </article>
+
+  <script>
+    var pay = document.getElementById("pay");
+    var tips = document.getElementById("tips");
+    var live = document.getElementById("live");
+    var error = document.getElementById("error");
+
+    function money(n) {
+      return n.toLocaleString("en-CA", { style: "currency", currency: "CAD" });
+    }
+    function num(el) {
+      var raw = String(el.value || "").replace(/[^0-9.]/g, "");
+      if (raw === "") return 0;
+      var n = parseFloat(raw);
+      return isNaN(n) ? NaN : Math.round(n * 100) / 100;
+    }
+    function refresh() {
+      var p = num(pay);
+      var t = num(tips);
+      var total = (isNaN(p) ? 0 : p) + (isNaN(t) ? 0 : t);
+      live.textContent = money(total);
+    }
+    pay.addEventListener("input", refresh);
+    tips.addEventListener("input", refresh);
+
+    function prettyDate(iso) {
+      if (!iso) return "";
+      var parts = iso.split("-");
+      var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      return d.toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" });
+    }
+
+    document.getElementById("create").addEventListener("click", function () {
+      error.textContent = "";
+      var name = document.getElementById("name").value.trim();
+      var p = num(pay);
+      var t = num(tips);
+      if (!name) { error.textContent = "Type your full name first."; return; }
+      if (isNaN(p) || isNaN(t)) { error.textContent = "Pay and tips need to be numbers, like 208 or 190.59."; return; }
+      if (p + t <= 0) { error.textContent = "Type the Pay amount, the Tips amount, or both."; return; }
+
+      var phone = document.getElementById("phone").value.trim();
+      var email = document.getElementById("email").value.trim();
+      var job = document.getElementById("job").value.trim() || "Event staff";
+      var eventName = document.getElementById("event").value.trim() || "Alive at the Museum";
+      var worked = prettyDate(document.getElementById("worked").value);
+      var bill = document.getElementById("billto").value.trim() || eventName;
+      var today = new Date().toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" });
+      var stamp = (document.getElementById("worked").value || "invoice").replace(/-/g, "");
+      var initials = name.split(/\s+/).map(function (w) { return w[0] || ""; }).join("").toUpperCase().slice(0, 4);
+
+      document.getElementById("p-name").textContent = name;
+      document.getElementById("p-phone").textContent = phone;
+      document.getElementById("p-email").textContent = email;
+      document.getElementById("p-bill").textContent = bill;
+      document.getElementById("p-num").textContent = "INV-" + stamp + "-" + initials;
+      document.getElementById("p-date").textContent = today;
+
+      var lines = "";
+      if (p > 0) {
+        lines += "<tr><td>" + escapeHtml(job) + " for " + escapeHtml(eventName) + ", Winnipeg, on " + escapeHtml(worked) + ".</td><td class='num'>" + money(p) + "</td></tr>";
+      }
+      if (t > 0) {
+        lines += "<tr><td>Tips for the same shift" + (worked ? " on " + escapeHtml(worked) : "") + ".</td><td class='num'>" + money(t) + "</td></tr>";
+      }
+      document.getElementById("p-lines").innerHTML = lines;
+      document.getElementById("p-sub").textContent = money(p + t);
+      document.getElementById("p-total").textContent = money(p + t);
+
+      var contact = [phone, email].filter(Boolean).join(" or ");
+      document.getElementById("p-note").textContent = "No tax charged. Please pay the total above through the office process already in place." +
+        (contact ? " Contact " + name + " at " + contact + " with any questions about this invoice." : "");
+
+      document.getElementById("tools").hidden = false;
+      document.getElementById("tools").scrollIntoView({ behavior: "smooth" });
+    });
+
+    document.getElementById("save").addEventListener("click", function () { window.print(); });
+    document.getElementById("back").addEventListener("click", function () {
+      document.getElementById("form").scrollIntoView({ behavior: "smooth" });
+    });
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+  </script>
+</body>
+</html>
