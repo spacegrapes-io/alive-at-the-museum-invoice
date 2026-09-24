@@ -45,7 +45,11 @@
       background: #fff;
     }
     input:focus { outline: 2px solid #8eafd6; border-color: var(--bar); }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 10px; }
+    @media (max-width: 520px) {
+      .row { grid-template-columns: 1fr; }
+      h1 { font-size: 24px; }
+    }
     .total-box {
       margin-top: 16px;
       background: #f4f7fb;
@@ -133,7 +137,7 @@
   <div class="wrap">
     <h1>Make your invoice</h1>
     <p class="by">Built by Kassius Jewar-Tessier</p>
-    <p class="lead">This page turns your numbers into a PDF invoice. A screenshot of Clayton Feenstra’s text is not an invoice. Type your name, then the Pay and Tips from his message. Save the PDF and attach that file on the pay form.</p>
+    <p class="lead">This page saves a PDF invoice onto your phone. It does not open the print screen. A screenshot of Clayton Feenstra’s text is not an invoice. Type your name, then the Pay and Tips from his message. Save the PDF and attach that file on the pay form.</p>
     <form id="form">
       <label for="name">Your full name</label>
       <input id="name" autocomplete="name" placeholder="First and last name" />
@@ -184,8 +188,8 @@
 
     <div class="preview-tools" id="tools" hidden>
       <p>Check the total. It should match the Total in Clayton Feenstra’s message.</p>
-      <p>Then save the PDF. On an iPhone, tap the share icon on the print screen and choose Save to Files.</p>
-      <button type="button" id="save">Save as PDF</button>
+      <p>Tap the button below. It saves a PDF file to your phone. On an iPhone, choose Save to Files.</p>
+      <button type="button" id="save">Save PDF to my phone</button>
       <button type="button" class="secondary" id="back">Edit my details</button>
     </div>
   </div>
@@ -294,14 +298,144 @@
       document.getElementById("p-total").textContent = money(p + t);
 
       var contact = [phone, email].filter(Boolean).join(" or ");
-      document.getElementById("p-note").textContent = "No tax charged. Please pay the total above through the office process already in place." +
+      var note = "No tax charged. Please pay the total above through the office process already in place." +
         (contact ? " Contact " + name + " at " + contact + " with any questions about this invoice." : "");
+      document.getElementById("p-note").textContent = note;
+      var pdfLines = [];
+      if (p > 0) pdfLines.push({ text: job + " for " + eventName + ", Winnipeg, on " + worked + ".", amount: money(p) });
+      if (t > 0) pdfLines.push({ text: "Tips for the same shift" + (worked ? " on " + worked : "") + ".", amount: money(t) });
+      lastInvoice = {
+        name: name,
+        phone: phone,
+        email: email,
+        bill: bill,
+        number: "INV-" + stamp + "-" + initials,
+        today: today,
+        lines: pdfLines,
+        total: money(p + t),
+        note: note
+      };
 
       document.getElementById("tools").hidden = false;
       document.getElementById("tools").scrollIntoView({ behavior: "smooth" });
     });
 
-    document.getElementById("save").addEventListener("click", function () { window.print(); });
+    var lastInvoice = null;
+
+    function wrapText(doc, text, x, y, maxWidth, lineHeight) {
+      var lines = doc.splitTextToSize(text, maxWidth);
+      doc.text(lines, x, y);
+      return y + lines.length * lineHeight;
+    }
+
+    function pdfEscape(text) {
+      return String(text).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+    }
+
+    function buildPdf(inv) {
+      var commands = [];
+      function text(str, x, y, size, font) {
+        commands.push("BT /" + font + " " + size + " Tf " + x + " " + y + " Td (" + pdfEscape(str) + ") Tj ET");
+      }
+      text("INVOICE", 48, 740, 22, "F2");
+      text(inv.name, 360, 740, 12, "F2");
+      var info = ["Winnipeg, MB"].concat([inv.phone, inv.email].filter(Boolean));
+      info.forEach(function (line, i) { text(line, 360, 722 - i * 14, 10, "F1"); });
+      text("BILL TO", 48, 660, 9, "F2");
+      text(inv.bill, 48, 644, 12, "F1");
+      text("Invoice #  " + inv.number, 340, 660, 10, "F1");
+      text("Invoice date  " + inv.today, 340, 644, 10, "F1");
+      text("Payment due  On receipt", 340, 628, 10, "F1");
+      text("DESCRIPTION", 48, 590, 9, "F2");
+      text("AMOUNT", 500, 590, 9, "F2");
+      var y = 566;
+      inv.lines.forEach(function (line) {
+        var words = line.text.split(" ");
+        var row = "";
+        var rows = [];
+        words.forEach(function (word) {
+          var next = row ? row + " " + word : word;
+          if (next.length > 70) { rows.push(row); row = word; }
+          else row = next;
+        });
+        if (row) rows.push(row);
+        rows.forEach(function (part, i) {
+          text(part, 48, y, 11, "F1");
+          if (i === 0) text(line.amount, 470, y, 11, "F1");
+          y -= 16;
+        });
+        y -= 8;
+      });
+      y -= 8;
+      text("Subtotal", 380, y, 11, "F1");
+      text(inv.total, 470, y, 11, "F1");
+      y -= 18;
+      text("Tax", 380, y, 11, "F1");
+      text("$0.00", 470, y, 11, "F1");
+      y -= 22;
+      text("Total due", 380, y, 13, "F2");
+      text(inv.total, 470, y, 13, "F2");
+      y -= 36;
+      var noteWords = inv.note.split(" ");
+      var noteRow = "";
+      noteWords.forEach(function (word) {
+        var next = noteRow ? noteRow + " " + word : word;
+        if (next.length > 90) { text(noteRow, 48, y, 9, "F1"); y -= 13; noteRow = word; }
+        else noteRow = next;
+      });
+      if (noteRow) text(noteRow, 48, y, 9, "F1");
+      var stream = commands.join("\n");
+      var objects = [];
+      function add(body) { objects.push(body); return objects.length; }
+      add("<< /Type /Catalog /Pages 2 0 R >>");
+      add("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+      add("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>");
+      add("<< /Length " + stream.length + " >>\nstream\n" + stream + "\nendstream");
+      add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+      add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+      var body = "%PDF-1.4\n";
+      var offsets = [0];
+      objects.forEach(function (obj, i) {
+        offsets.push(body.length);
+        body += (i + 1) + " 0 obj\n" + obj + "\nendobj\n";
+      });
+      var xref = body.length;
+      body += "xref\n0 " + (objects.length + 1) + "\n";
+      body += "0000000000 65535 f \n";
+      for (var i = 1; i < offsets.length; i++) {
+        body += String(offsets[i]).padStart(10, "0") + " 00000 n \n";
+      }
+      body += "trailer << /Size " + (objects.length + 1) + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF";
+      return new Blob([body], { type: "application/pdf" });
+    }
+
+    async function savePdfFile() {
+      if (!lastInvoice) return;
+      var inv = lastInvoice;
+      var filename = "Invoice-" + inv.name.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".pdf";
+      var blob = buildPdf(inv);
+      var file = new File([blob], filename, { type: "application/pdf" });
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: filename });
+          return;
+        }
+      } catch (err) {
+        if (err && err.name === "AbortError") return;
+      }
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+    }
+
+    document.getElementById("save").addEventListener("click", function () {
+      savePdfFile();
+    });
     document.getElementById("back").addEventListener("click", function () {
       document.getElementById("form").scrollIntoView({ behavior: "smooth" });
     });
